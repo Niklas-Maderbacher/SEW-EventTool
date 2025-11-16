@@ -2,10 +2,14 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
+from app.models.user_roles import USER_ROLE
+
 
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=5, max_length=15)
+    name: str = Field(..., min_length=5, max_length=15)
     email: EmailStr = Field(..., min_length=7, max_length=50)
+    phone_number: str
+    role: USER_ROLE
 
 
 class UserCreate(UserBase):
@@ -18,9 +22,6 @@ class UserUpdate(UserBase):
 
 class UserInDBBase(UserBase):
     id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    is_superuser: bool = False
 
     class Config:
         from_attributes = True
@@ -31,4 +32,4 @@ class User(UserInDBBase):
 
 
 class UserInDB(UserInDBBase):
-    hashed_password: str
+    password_hash: str
