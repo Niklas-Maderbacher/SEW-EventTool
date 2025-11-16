@@ -8,6 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.session import Base, engine
 
+from app.models.user import User
+from app.models.location import Location
+from app.models.event import Event
+from app.models.ticket import Ticket
+from app.models.booking import Booking
+
 
 
 
@@ -39,4 +45,4 @@ app.include_router(api_router)
 # models must be imported and registered from app.models to create the tables
 
 # Create tables
-#Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
