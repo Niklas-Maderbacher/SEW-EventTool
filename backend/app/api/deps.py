@@ -15,7 +15,7 @@ from app.core.config import settings
 
 from app.schemas.token import TokenData
 from app.schemas.user import User
-from app.crud.user import get_user_by_email
+from app.crud.user import get_user_by_name
 
 
 # Database Session
@@ -73,15 +73,12 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             detail="Could not validate credentials",
         )
     assert token_data.username is not None
-    user = get_user_by_email(db=session, email=token_data.username)
+    user = get_user_by_name(db=session, name=token_data.username)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    if user.updated_at is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
-        )
+
     return user
 
 

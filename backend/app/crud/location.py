@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Session
 from app.models.location import Location
 from app.schemas.location import LocationCreate, LocationBase, LocationUpdate
+from app.schemas.user import UserInDB
+from app.models.user_roles import USER_ROLE
+from app.crud.exeptions.not_authorised import UserNotAuthorised
 
-def get_all_locations(*, db: Session):
+def get_all_locations(*, db: Session, user: UserInDB):
     return db.query(Location).all()
 
 def get_location_by_id(*, db: Session, id: int):

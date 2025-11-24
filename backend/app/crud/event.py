@@ -3,10 +3,16 @@ from datetime import datetime
 
 from app.models.event import Event
 from app.schemas.event import EventBase, EventCreate, EventUpdate
+from app.schemas.user import UserInDB
+from app.models.user_roles import USER_ROLE
+from app.crud.exeptions.not_authorised import UserNotAuthorised
 
 
-def get_all_events(*, db: Session):
-    return db.query(Event).all()
+def get_all_events(*, db: Session, user: UserInDB):
+    if user.role == USER_ROLE.ADMIN:
+        return db.query(Event).all()
+    else:
+        return db.query(Event).filter(Event.organizer_id == user.id)
 
 def get_event_by_id(*, db: Session, id: int):
     return db.query(Event).filter(Event.id == id).first()
@@ -26,13 +32,13 @@ def get_event_by_location(*, db: Session, location_id: int):
 def get_event_by_organizer(*, db: Session, organizer_id: int):
     return db.query(Event).filter(Event.organizer_id == organizer_id).first()
 
-def create_event(*, db: Session, event: EventCreate):
+def create_event(*, db: Session, event: EventCreate, user: UserInDB):
     event_db = Event(
         name=event.name,
         date = event.date,
         description = event.description,
         location_id = event.location_id,
-        organizer_id = event.organizer_id
+        organizer_id = user.id,
     )
 
     db.add(event_db)
@@ -41,24 +47,29 @@ def create_event(*, db: Session, event: EventCreate):
 
     return event_db
 
-def update_event(*, db: Session, id: int, event: EventUpdate):
+def update_event(*, db: Session, id: int, event: EventUpdate, user: UserInDB):
     event_db = db.query(Event).filter(Event.id == id).first()
+
+    if user.id != event_db.organizer_id and user.role != USER_ROLE.ADMIN:
+        raise UserNotAuthorised()
 
     event_db.name = event.name
     event_db.date = event.date
     event_db.description = event.description
     event_db.location_id = event.location_id
-    event_db.organizer_id = event.organizer_id
 
     db.commit()
     db.refresh(event_db)
 
     return event_db
 
-def delete_event(*, db: Session, id: int):
+def delete_event(*, db: Session, id: int, user: UserInDB):
     event_db = db.query(Event).filter(Event.id == id).first()
-    db.query(Event).filter(Event.id == id).delete()
 
+    if user.id != event_db.organizer_id and user.role != USER_ROLE.ADMIN:
+        raise UserNotAuthorised()
+
+    db.query(Event).filter(Event.id == id).delete()
     db.commit()
 
     return event_db

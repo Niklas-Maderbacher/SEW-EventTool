@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.crud import user as crud
+from app.crud.user import authenticate_user
 from app.schemas import token as schemas
 from app.schemas.user import User
 from app.api.deps import SessionDep, CurrentUser
@@ -19,17 +19,13 @@ router = APIRouter(tags=["login"])
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> schemas.Token:
-    user = crud.authenticate_user(
-        db=session, email=form_data.username, password=form_data.password
+    user = authenticate_user(
+        db=session, name=form_data.username, password=form_data.password
     )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
-        )
-    elif user.updated_at is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return schemas.Token(
